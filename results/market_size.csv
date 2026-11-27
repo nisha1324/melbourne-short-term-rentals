@@ -1,0 +1,7 @@
+row_no,definition,listings,hosts
+1,All listings in the snapshot,25715,13999
+2,Found in this scrape (not carried over from an earlier one),18872,8975
+3,With a quoted price,19004,9055
+4,At least one open night in the next 365 days,19532,9364
+5,Reviewed in the last 12 months (the active market used here),15595,7562
+6,Active and with a quoted price,14368,6963

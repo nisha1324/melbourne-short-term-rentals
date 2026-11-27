@@ -1,0 +1,21 @@
+check_no,check_name,found,expected,status
+1,Duplicate listing ids,0,0,pass
+2,Listings outside the 30 councils in the boundary file,0,0,pass
+3,Councils with no listing,0,0,pass
+4,Prices that do not parse as a number,0,0,pass
+5,Price differs from the quoted total / nights,0,0,pass
+6,Price quoted for a check-in before the scrape date,0,0,pass
+7,Listings with no calendar,0,0,pass
+8,Calendar rows for listings not in the snapshot,0,0,pass
+9,Listings whose calendar is not exactly 365 days,1,0,note
+10,availability_365 differs from the open days in the calendar,12,0,note
+11,Reviews for listings not in the snapshot,0,0,pass
+12,number_of_reviews differs from the review file,0,0,pass
+13,first_review or last_review differs from the review file,0,0,pass
+14,number_of_reviews_ltm differs from reviews in the 365 days to the scrape,0,0,pass
+15,Host listing count differs from a count by host_id,0,0,pass
+16,Reviews dated after the scrape,0,0,pass
+17,Listings with no quoted price,6711,,info
+18,Quoted price under $20 a night,1,,info
+19,"Quoted price of $2,000 a night or more",114,,info
+20,Listings with a licence or registration number,0,,info

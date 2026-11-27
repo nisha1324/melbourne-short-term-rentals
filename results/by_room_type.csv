@@ -1,0 +1,5 @@
+room_type,active_listings,share_pct,with_price,price_p25,price_median,price_p75,median_guests
+Entire home/apt,12842,82.3,11841,230,300,398,4.0
+Private room,2641,16.9,2417,82,107,144,2.0
+Shared room,99,0.6,97,37,51,70,1.0
+Hotel room,13,0.1,13,318,354,399,2.0

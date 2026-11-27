@@ -1,0 +1,16 @@
+room_type,band,price_band,listings,share_pct
+Entire home/apt,1,under $100,32,0.3
+Entire home/apt,2,$100-149,390,3.3
+Entire home/apt,3,$150-199,1350,11.4
+Entire home/apt,4,$200-299,4149,35.0
+Entire home/apt,5,$300-499,4302,36.3
+Entire home/apt,6,$500-999,1401,11.8
+Entire home/apt,7,"$1,000-1,999",188,1.6
+Entire home/apt,8,"$2,000+",29,0.2
+Private room,1,under $100,1054,43.6
+Private room,2,$100-149,811,33.6
+Private room,3,$150-199,304,12.6
+Private room,4,$200-299,164,6.8
+Private room,5,$300-499,68,2.8
+Private room,6,$500-999,14,0.6
+Private room,7,"$1,000-1,999",2,0.1
