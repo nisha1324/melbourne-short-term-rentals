@@ -1,0 +1,36 @@
+{
+  "source": "Inside Airbnb, Melbourne, Victoria, Australia",
+  "snapshot": "2026-09-16",
+  "licence": "CC BY 4.0 (Inside Airbnb, https://insideairbnb.com/get-the-data/)",
+  "citation": "Inside Airbnb. (2026). Melbourne Airbnb listings data, September 2026 (snapshot 2026-09-16) [Data set]. https://insideairbnb.com/get-the-data/",
+  "files": {
+    "listings.csv.gz": {
+      "url": "https://data.insideairbnb.com/australia/vic/melbourne/2026-09-16/data/listings.csv.gz",
+      "bytes": 15409076,
+      "sha256": "7d09b7124bfc26bdb5c8a2a66efe0b9a48e4e1d7cc2e11242e9d52ee3f17985b",
+      "last_modified": "Sun, 20 Sep 2026 13:57:05 GMT",
+      "downloaded_utc": "2026-11-27T15:37:55Z"
+    },
+    "calendar.csv.gz": {
+      "url": "https://data.insideairbnb.com/australia/vic/melbourne/2026-09-16/data/calendar.csv.gz",
+      "bytes": 22480256,
+      "sha256": "381b22a8ca006682290428faa5ebcd4320bb767effcd30eb91670a372b177f86",
+      "last_modified": "Sun, 20 Sep 2026 13:57:46 GMT",
+      "downloaded_utc": "2026-11-27T15:37:58Z"
+    },
+    "reviews.csv": {
+      "url": "https://data.insideairbnb.com/australia/vic/melbourne/2026-09-16/visualisations/reviews.csv",
+      "bytes": 25561868,
+      "sha256": "5f4af269fb60185294fc8378a676e0378a3e6303f8a167360427a2ca9fef649c",
+      "last_modified": "Sun, 20 Sep 2026 13:56:52 GMT",
+      "downloaded_utc": "2026-11-27T15:38:01Z"
+    },
+    "neighbourhoods.geojson": {
+      "url": "https://data.insideairbnb.com/australia/vic/melbourne/2026-09-16/visualisations/neighbourhoods.geojson",
+      "bytes": 3013242,
+      "sha256": "60651f3d4de4a573a2b3402706d6da31aeecb8befe9d008a27cfbf6e63df23cf",
+      "last_modified": "Sun, 20 Sep 2026 13:56:59 GMT",
+      "downloaded_utc": "2026-11-27T15:38:03Z"
+    }
+  }
+}

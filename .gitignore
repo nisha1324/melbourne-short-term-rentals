@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+.pytest_cache/
+.env
+*.part
+# Inside Airbnb asks users not to republish its data: the raw files are
+# downloaded once into data/raw/ and never committed.
+data/raw/
+data/*.duckdb
+data/*.duckdb.wal
