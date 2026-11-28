@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 
 import pandas as pd
@@ -143,3 +144,62 @@ def test_part2_ranking_claims_hold():
     # the two councils named as rising are the two biggest risers; Casey and Wyndham are among the four biggest fallers
     assert set(moved.nlargest(2, "move")["lga"]) == {"Stonnington", "Port Phillip"}
     assert {"Casey", "Wyndham"} <= set(moved.nsmallest(4, "move")["lga"])
+
+
+def part3_statements() -> list[str]:
+    summ = csv("concentration_summary").set_index("market_no")
+    lg = csv("largest_hosts").set_index("largest_hosts")
+    council = csv("council_hosts").set_index("lga")
+    prof = csv("host_size_profile").set_index("band")
+    typ = csv("typical_operator").set_index("row_no")
+    check = csv("host_count_check").set_index("band")
+    allm, ent = summ.loc[1], summ.loc[2]
+    mel, yr, nil = (council.loc[c] for c in ("Melbourne", "Yarra Ranges", "Nillumbik"))
+    pool = council.sort_values("single_host_entire_homes", ascending=False).head(5)
+    ops = typ.loc[3]
+    return [
+        f"The largest host runs {lg.loc[1, 'share_of_listings_pct']}% of active listings and the largest 10 run "
+        f"{lg.loc[10, 'share_of_listings_pct']}%",
+        f"the {allm['operators']} operators ({100 * allm['operators'] / allm['hosts']:.1f}% of hosts) run "
+        f"{allm['operator_share_pct']}% of listings ({ent['operator_share_pct']}% of entire homes), and "
+        f"{allm['hosts_for_half']} hosts run half",
+        f"Operators run {mel['operator_pct']}% of the City of Melbourne's listings, and {mel['operators_present']:.0f} of "
+        f"the {allm['operators']} have a listing there, but {yr['operator_pct']}% of Yarra Ranges' and "
+        f"{nil['operator_pct']}% of Nillumbik's",
+        f"**{council['single_host_entire_homes'].sum():,} entire homes are run by a host with no other active listing**",
+        f"{pool['single_host_entire_homes'].sum():,} of them are in five councils (Melbourne, Port Phillip, Yarra, "
+        f"Yarra Ranges and Stonnington)" if list(pool.index) == ["Melbourne", "Port Phillip", "Yarra", "Yarra Ranges",
+                                                                "Stonnington"] else "MISMATCH",
+        f"every host-size group prices within {math.ceil(prof['vs_peers_pct'].abs().max())}% of its peers "
+        f"(one-listing hosts {prof.loc[1, 'vs_peers_pct']:.1f}%, hosts with 50+ listings +{prof.loc[5, 'vs_peers_pct']}%)"
+        .replace("-", "−").replace("one−listing", "one-listing").replace("host−size", "host-size"),
+        f"from a median {prof.loc[1, 'rating_median']:.2f} for one-listing hosts to {prof.loc[5, 'rating_median']:.2f} "
+        f"for hosts with 50+",
+        f"{prof.loc[5, 'superhost_pct']}% of the largest hosts are Superhosts against {prof.loc[1, 'superhost_pct']}% of "
+        f"one-listing hosts",
+        f"runs {ops['median_listings']:g} active listings across {ops['median_councils']:g} councils; "
+        f"{ops['only_entire_pct']}% run nothing but entire homes, and {ops['any_inner3_pct']}% have at least one listing",
+        f"({check.loc[[4, 5], 'hosts_by_all_listings'].sum()} hosts with 10 or more listings, not "
+        f"{check.loc[[4, 5], 'hosts_by_active_listings'].sum()})",
+    ]
+
+
+@pytest.mark.parametrize("statement", part3_statements())
+def test_readme_part3_figure_matches_results(statement):
+    assert statement in text()
+
+
+def test_part3_wording_claims_hold():
+    prof = csv("host_size_profile").set_index("band")
+    council = csv("council_hosts")
+    # "ratings fall with size" and, in HOSTS.md, "hosts with 2-4 listings are the most likely" to be Superhosts
+    assert prof["rating_median"].is_monotonic_decreasing and prof["rating_median"].is_unique
+    assert prof["superhost_pct"].idxmax() == 2
+    # "reviews and open nights barely differ": medians within 2 reviews and 3 open nights across the groups
+    assert prof["reviews_ltm_median"].max() - prof["reviews_ltm_median"].min() <= 2
+    assert prof["open_30_median"].max() - prof["open_30_median"].min() <= 3
+    # the City of Melbourne has the highest operator share and Nillumbik the lowest
+    assert council.iloc[0]["lga"] == "Melbourne" and council.iloc[-1]["lga"] == "Nillumbik"
+    # "nearly a third": the operators' share rounds to 31%, just under a third
+    share = csv("concentration_summary").set_index("market_no").loc[1, "operator_share_pct"]
+    assert 28 <= share < 100 / 3

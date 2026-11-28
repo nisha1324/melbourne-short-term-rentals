@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nisha1324/melbourne-short-term-rentals/actions/workflows/ci.yml/badge.svg)](https://github.com/nisha1324/melbourne-short-term-rentals/actions/workflows/ci.yml)
 
-**Status: work in progress (Parts 1 and 2 of 5 done).**
+**Status: work in progress (Parts 1-3 of 5 done).**
 
 Melbourne's Airbnb snapshot lists over 25,000 places to stay, and a common question in housing debates is how
 many of them are homes that would otherwise be rented to people who live here. Property managers and
@@ -36,8 +36,8 @@ off the long-term market. It is SQL (DuckDB) and Python on real public data, wit
 | --- | --- | --- |
 | 1 | **Source, snapshot and data profile**: which listings count as the active market, 20 data-quality checks, room types, prices, councils, minimum stays and a first look at hosts | done: [`results/PROFILE.md`](results/PROFILE.md) |
 | 2 | **Pricing**: what a night costs by size and council, size for size; how stay length, weekends and Grand Final weekend move the price; a council × size price guide; and how homes priced well above or below similar ones fare | done: [`results/PRICING.md`](results/PRICING.md) |
-| 3 | **Host concentration**: how much of the market multi-listing operators run, council by council, and what a typical operator's portfolio looks like (hosts anonymised) | next |
-| 4 | **Homes off the long-term market**: entire homes that are open most of the year and booked often enough to look like full-time short-stay rentals, by council, with their estimated earnings set against long-term rents | planned |
+| 3 | **Host concentration**: how much of the market multi-listing operators run, council by council, how they compare with one-listing hosts, and what a typical operator's portfolio looks like (no host named) | done: [`results/HOSTS.md`](results/HOSTS.md) |
+| 4 | **Homes off the long-term market**: entire homes that are open most of the year and booked often enough to look like full-time short-stay rentals, by council, with their estimated earnings set against long-term rents | next |
 | 5 | **Summary**: findings, ranked recommendations and limits | planned |
 
 ## Part 1 findings
@@ -86,6 +86,32 @@ the same number of bedrooms (groups of 10 or more, which hold 98.2% of the homes
 
 ![Entire-home prices by council, as quoted and size for size](results/charts/05_council_prices_same_size.png)
 
+## Part 3 findings: who runs the market
+
+Full report: [`results/HOSTS.md`](results/HOSTS.md). A host is one Airbnb account (so this measures who runs
+listings, not who owns the homes). Its size is its number of active listings across all 30 councils, and
+**operators** are hosts with 10 or more.
+
+- **No single host is big, but a tier of operators runs nearly a third of the market.** The largest host runs 0.7%
+  of active listings and the largest 10 run 5.4%. Yet the 192 operators (2.5% of hosts) run 30.8% of listings
+  (34.1% of entire homes), and 841 hosts run half.
+- **The mix depends on the council.** Operators run 46.5% of the City of Melbourne's listings, and 160 of the 192
+  have a listing there, but 11.3% of Yarra Ranges' and 4.1% of Nillumbik's. In the City of Melbourne, rules on
+  short stays would mostly land on a few hundred operators; in the outer and hills councils, on many small hosts.
+  A council housing team should read its own row.
+- **4,743 entire homes are run by a host with no other active listing**, the natural client pool for a property
+  manager; 2,852 of them are in five councils (Melbourne, Port Phillip, Yarra, Yarra Ranges and Stonnington).
+- **Scale does not seem to buy pricing power.** Size for size, every host-size group prices within 5% of its peers
+  (one-listing hosts −2.9%, hosts with 50+ listings +4.4%), and reviews and open nights barely differ. Ratings fall
+  with size, from a median 4.92 for one-listing hosts to 4.76 for hosts with 50+, and 26.3% of the largest hosts are
+  Superhosts against 47.6% of one-listing hosts.
+- **The typical operator** runs 17 active listings across 3 councils; 78.1% run nothing but entire homes, and
+  89.6% have at least one listing in the City of Melbourne, Port Phillip or Yarra.
+- **Inside Airbnb's own host counts run higher** (266 hosts with 10 or more listings, not 192) because they include
+  dormant listings.
+
+![Share of each council's listings by host size](results/charts/10_council_host_mix.png)
+
 ## How to run
 
 Python 3.12.
@@ -96,26 +122,28 @@ pip install -r requirements-lock.txt      # exact versions the committed outputs
 python scripts/download_data.py           # once: ~66 MB into data/raw/, checked against the pinned hashes
 python scripts/profile_report.py          # builds data/str_melbourne.duckdb, writes results/ (Part 1)
 python scripts/pricing_report.py          # Part 2, from the same database
+python scripts/hosts_report.py            # Part 3, from the same database
 pytest -q
 ```
 
 `python scripts/download_data.py --check` checks the files without touching the network.
 
 **Tests.** The build and every query are tested on hand-made snapshots whose expected results are worked out
-by hand (six listings for Part 1 in `tests/conftest.py`, twelve for Part 2 in `tests/test_pricing.py`), so CI
-runs without downloading the data. With the real data present,
-`tests/test_regenerate.py` also checks that both reports, their CSVs and charts regenerate byte for byte, and
+by hand (six listings for Part 1 in `tests/conftest.py`, twelve for Part 2 in `tests/test_pricing.py`, 79 from
+eleven hosts for Part 3 in `tests/test_hosts.py`), so CI runs without downloading the data. With the real data
+present, `tests/test_regenerate.py` also checks that all three reports, their CSVs and charts regenerate byte for
+byte, and
 `tests/test_readme.py` checks the figures in this README against the committed results.
 
 ## Repository layout
 
 ```
 str_market/   source.py (URLs, pinned hashes), build.py (raw files -> DuckDB), profile.py (Part 1 queries),
-              pricing.py (Part 2 thresholds and queries)
+              pricing.py (Part 2 thresholds and queries), hosts.py (Part 3 queries)
 sql/          one file per query; active_listings.sql defines the active market used everywhere,
-              priced_homes.sql the peer comparison used in Part 2
-scripts/      download_data.py, profile_report.py, pricing_report.py
-results/      PROFILE.md, PRICING.md, aggregated CSVs, charts/
+              priced_homes.sql the peer comparison used in Part 2, host_listings.sql the host sizes in Part 3
+scripts/      download_data.py, profile_report.py, pricing_report.py, hosts_report.py
+results/      PROFILE.md, PRICING.md, HOSTS.md, aggregated CSVs, charts/
 tests/        fixture snapshot and tests
 data/         SNAPSHOT.json (committed); raw/ and the DuckDB file are gitignored
 ```
@@ -129,5 +157,7 @@ data/         SNAPSHOT.json (committed); raw/ and the DuckDB file are gitignored
   and the calendar carries no prices. So each listing has one price, and differences by date are differences
   between listings.
 - Peers share a council and a bedroom count, not a street, view or fit-out.
+- A host is an Airbnb account, not a company or an owner: one business may use several accounts, and a manager's
+  account mixes homes from many owners.
 - Inside Airbnb is an advocacy project as well as a data source. Everything here is recomputed from its raw files
   with the definitions in `sql/`, not taken from its dashboards.
