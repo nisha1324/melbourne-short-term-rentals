@@ -16,7 +16,8 @@ from str_market import source
 
 pytestmark = pytest.mark.skipif(not source.DB_PATH.exists(), reason="needs the local database built from data/raw/")
 
-REPORTS = {"profile": ["scripts/profile_report.py", "--no-build"], "pricing": ["scripts/pricing_report.py"]}
+REPORTS = {"profile": ["scripts/profile_report.py", "--no-build"], "pricing": ["scripts/pricing_report.py"],
+           "hosts": ["scripts/hosts_report.py"]}
 
 
 @pytest.fixture(scope="module")

@@ -76,9 +76,10 @@ def _gz_csv(path: Path, header: list[str], rows: list[list]) -> None:
 
 
 def write_fixture(raw: Path, listings=LISTINGS, calendar=CALENDAR, reviews=REVIEWS, host_counts=HOST_COUNTS,
-                  sizes: dict | None = None) -> None:
+                  sizes: dict | None = None, superhosts: frozenset = frozenset()) -> None:
     """Write a snapshot in Inside Airbnb's format. `sizes` maps listing id -> (guests, bedrooms);
-    listings not in it take 2 guests and 1 bedroom (as every listing in the Part 1 snapshot does)."""
+    listings not in it take 2 guests and 1 bedroom (as every listing in the Part 1 snapshot does).
+    Hosts in `superhosts` are marked as Superhosts (none are in the Part 1 and 2 snapshots)."""
     raw.mkdir(parents=True, exist_ok=True)
     sizes = sizes or {}
     rows = []
@@ -88,7 +89,7 @@ def write_fixture(raw: Path, listings=LISTINGS, calendar=CALENDAR, reviews=REVIE
                      lga, -37.8, 144.9, "Entire rental unit", room, guests, bedrooms, 1, "1 bath", price, qin, qout,
                      qtot, qpn,
                      mn, 365, "t", min(av, 30), min(av, 90), av, nrev, ltm, first, last, 4.8 if nrev else "",
-                     0, "", host_counts[host], "", "f", "", ""])
+                     0, "", host_counts[host], "", "t" if host in superhosts else "f", "", ""])
     _gz_csv(raw / "listings.csv.gz", HEADER, rows)
 
     cal = []
