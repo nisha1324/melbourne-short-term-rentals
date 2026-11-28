@@ -1,0 +1,6 @@
+band,host_size,hosts,active_listings,share_of_listings_pct,entire_pct,entire_median_bedrooms,entire_price_median,vs_peers_pct,far_above_pct,open_30_median,reviews_ltm_median,rating_median,min_nights_median,min_28_pct,superhost_pct,median_councils
+1,1 listing,5748,5748,36.9,82.5,2.0,285,-2.9,11.2,11.0,10.0,4.92,2.0,1.0,47.6,1.0
+2,2-4 listings,1352,3332,21.4,72.1,2.0,295,-0.2,10.0,13.0,8.0,4.88,1.0,0.8,57.3,1.0
+3,5-9 listings,270,1716,11.0,76.9,2.0,310,1.6,10.1,14.0,9.0,4.83,1.0,0.8,50.7,1.0
+4,10-49 listings,173,3465,22.2,89.6,2.0,311,0.6,8.6,12.0,9.0,4.79,2.0,0.5,41.0,3.0
+5,50+ listings,19,1334,8.6,95.6,2.0,312,4.4,10.6,12.0,10.0,4.76,2.0,0.4,26.3,6.0
