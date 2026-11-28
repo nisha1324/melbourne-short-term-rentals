@@ -177,3 +177,60 @@ def test_weekend_open_counts_scored_homes_with_friday_or_saturday_open(out):
     assert list(w["open_listings"]) == [1, 3, 2, 2, 2, 1, 1, 0]
     assert set(w["scored_listings"]) == {6}
     assert list(w["open_pct"]) == [16.7, 50.0, 33.3, 33.3, 33.3, 16.7, 16.7, 0.0]
+
+
+# ------------------------------------------------------------------ edge cases on an in-memory table
+# Scrape Friday 2026-09-18, one council (Zed), every home active and an entire home.
+# z1-z5: 1 bedroom, $100 (one peer group, all at the median), open nights in the next 30 days 0, 1, 29, 2, 3
+#   z1 Thu 24 Sep, 1 night (weekday)    z2 Sat 3 Oct, 1 night (weekend)   z3 Sat 19 Sep, 1 night (lead 1)
+#   z4 Fri 27 Nov, 2 nights (lead 70)   z5 Sun 20 Sep, 1 night (weekday)
+# a: 4 bedrooms $400 (alone); b, c, d: 5, 6 and 7 bedrooms (all "5+") at $500, $600, $1,000, quoted 100 days out.
+EDGE = [  # id, bedrooms, price, check-in, nights, open nights
+    ("z1", 1, 100, "2026-09-24", 1, 0), ("z2", 1, 100, "2026-10-03", 1, 1), ("z3", 1, 100, "2026-09-19", 1, 29),
+    ("z4", 1, 100, "2026-11-27", 2, 2), ("z5", 1, 100, "2026-09-20", 1, 3), ("a", 4, 400, "2026-12-27", 1, 0),
+    ("b", 5, 500, "2026-12-27", 1, 0), ("c", 6, 600, "2026-12-27", 1, 0), ("d", 7, 1000, "2026-12-27", 1, 0),
+]
+
+
+@pytest.fixture(scope="module")
+def edge():
+    import duckdb
+    c = duckdb.connect()
+    c.execute("""CREATE TABLE active (listing_id INTEGER, lga VARCHAR, room_type VARCHAR, price DOUBLE,
+                 bedrooms INTEGER, accommodates INTEGER, last_scraped DATE, quote_checkin DATE, quote_checkout DATE,
+                 number_of_reviews_ltm INTEGER, review_scores_rating DOUBLE)""")
+    c.execute("CREATE TABLE calendar (listing_id INTEGER, date DATE, available BOOLEAN)")
+    for i, (_name, beds, price, qin, nights, open_n) in enumerate(EDGE, start=1):
+        c.execute("INSERT INTO active VALUES (?, 'Zed', 'Entire home/apt', ?, ?, 2, DATE '2026-09-18', ?::DATE, "
+                  "?::DATE + ?::INTEGER, 5, 4.8)", [i, price, beds, qin, qin, nights])
+        c.execute("""INSERT INTO calendar SELECT ?, d::DATE, row_number() OVER (ORDER BY d) <= ?
+                     FROM generate_series(DATE '2026-09-18', DATE '2027-09-17', INTERVAL 1 DAY) t(d)""", [i, open_n])
+    pricing.prepare(c, min_peers=3, min_council_listings=1)
+    yield c
+    c.close()
+
+
+def test_edge_bedroom_bands_and_weekend_nights(edge):
+    got = edge.execute("SELECT listing_id, bed_band, has_weekend, lead_days, open_30 FROM priced_homes "
+                       "ORDER BY listing_id").fetchall()
+    assert got == [(1, 1, False, 6, 0), (2, 1, True, 15, 1), (3, 1, True, 1, 29), (4, 1, True, 70, 2),
+                   (5, 1, False, 2, 3), (6, 4, False, 100, 0), (7, 5, False, 100, 0), (8, 5, False, 100, 0),
+                   (9, 5, False, 100, 0)]
+    sizes = pricing.run_all(edge)["price_by_size"]
+    assert list(sizes["size"]) == ["1 bedroom", "4 bedrooms", "5+ bedrooms"]
+
+
+def test_edge_medians_not_means(edge):
+    out = pricing.run_all(edge)
+    # council: ratios to size medians 1 (x6: z1-z5 and a), 500/600, 600/600, 1000/600 -> median 1.0 (mean 1.056)
+    assert out["price_by_council"]["same_size_vs_market_pct"].tolist() == [0.0]
+    # "within 10%" band: z1-z5 and c, open nights 0, 1, 29, 2, 3, 0 -> median 1.5 (mean 5.8)
+    band3 = out["price_vs_peers"].set_index("band").loc[3]
+    assert (band3["listings"], band3["open_30_median"]) == (6, 1.5)
+
+
+def test_edge_lead_time_and_short_stay_window(edge):
+    lead = pricing.run_all(edge)["price_by_lead_time"].set_index("band")
+    assert lead.loc[1, "listings"] == 1          # z3 starts the day after the scrape: "0-1 days"
+    # short stays within 60 days: z1, z2, z3, z5 (z4 starts 70 days out; b, c, d 100 days out)
+    assert pricing.headline(edge)["short_stays"] == 4
