@@ -1,0 +1,6 @@
+band,price_vs_peers,listings,share_pct,price_median,median_guests,reviews_ltm_median,reviews_ltm_mean,open_30_median,open_90_median,rating_median
+1,A third or more below,906,7.8,177,4.0,12.5,19.5,10.0,48.0,4.8
+2,10-33% below,3180,27.4,238,4.0,14.0,20.1,11.0,51.0,4.84
+3,Within 10%,3473,29.9,300,4.0,12.0,17.4,12.0,55.0,4.86
+4,11-49% above,2876,24.8,369,4.0,10.0,14.7,13.0,58.0,4.88
+5,50% or more above,1178,10.1,535,4.0,7.0,12.5,15.0,61.0,4.92

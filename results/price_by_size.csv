@@ -1,0 +1,7 @@
+bed_band,size,listings,price_p25,price_median,price_p75,median_guests,per_guest_median
+0,Studio,276,170,196,243,2.0,89
+1,1 bedroom,3932,188,229,280,2.0,100
+2,2 bedrooms,4634,259,309,371,4.0,71
+3,3 bedrooms,1827,340,425,557,6.0,67
+4,4 bedrooms,816,360,469,657,8.0,58
+5,5+ bedrooms,343,488,620,915,12.0,54

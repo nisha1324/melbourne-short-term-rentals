@@ -1,0 +1,7 @@
+band,starts_in,listings,price_median,vs_peers_pct
+1,0-1 days,2697,312,2.8
+2,2-6 days,3737,298,-2.8
+3,7-13 days,1867,300,4.1
+4,14-29 days,1665,288,-2.3
+5,30-89 days,1142,279,-2.9
+6,90+ days,505,314,5.0
