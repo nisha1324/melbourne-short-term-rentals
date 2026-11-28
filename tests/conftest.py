@@ -75,18 +75,24 @@ def _gz_csv(path: Path, header: list[str], rows: list[list]) -> None:
         f.write(buf.getvalue())
 
 
-def write_fixture(raw: Path) -> None:
+def write_fixture(raw: Path, listings=LISTINGS, calendar=CALENDAR, reviews=REVIEWS, host_counts=HOST_COUNTS,
+                  sizes: dict | None = None) -> None:
+    """Write a snapshot in Inside Airbnb's format. `sizes` maps listing id -> (guests, bedrooms);
+    listings not in it take 2 guests and 1 bedroom (as every listing in the Part 1 snapshot does)."""
     raw.mkdir(parents=True, exist_ok=True)
+    sizes = sizes or {}
     rows = []
-    for (i, host, src, lga, room, price, qin, qout, qtot, qpn, mn, av, nrev, ltm, first, last) in LISTINGS:
+    for (i, host, src, lga, room, price, qin, qout, qtot, qpn, mn, av, nrev, ltm, first, last) in listings:
+        guests, bedrooms = sizes.get(i, (2, 1))
         rows.append([i, f"https://example.invalid/{i}", host, f"Host Name {host}", src, SCRAPED, "a description",
-                     lga, -37.8, 144.9, "Entire rental unit", room, 2, 1, 1, "1 bath", price, qin, qout, qtot, qpn,
+                     lga, -37.8, 144.9, "Entire rental unit", room, guests, bedrooms, 1, "1 bath", price, qin, qout,
+                     qtot, qpn,
                      mn, 365, "t", min(av, 30), min(av, 90), av, nrev, ltm, first, last, 4.8 if nrev else "",
-                     0, "", HOST_COUNTS[host], "", "f", "", ""])
+                     0, "", host_counts[host], "", "f", "", ""])
     _gz_csv(raw / "listings.csv.gz", HEADER, rows)
 
     cal = []
-    for i, (days, first_open, open_n) in CALENDAR.items():
+    for i, (days, first_open, open_n) in calendar.items():
         start = date(2026, 9, 18)
         fo = date.fromisoformat(first_open) if first_open else None
         for d in range(days):
@@ -98,7 +104,7 @@ def write_fixture(raw: Path) -> None:
     with open(raw / "reviews.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["listing_id", "date"])
-        for i, dates in REVIEWS.items():
+        for i, dates in reviews.items():
             w.writerows([i, d] for d in dates)
 
     feats = [{"type": "Feature", "geometry": None, "properties": {"neighbourhood": n, "neighbourhood_group": None}}
