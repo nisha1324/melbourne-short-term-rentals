@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nisha1324/melbourne-short-term-rentals/actions/workflows/ci.yml/badge.svg)](https://github.com/nisha1324/melbourne-short-term-rentals/actions/workflows/ci.yml)
 
-**Status: work in progress (Part 1 of 5 done).**
+**Status: work in progress (Parts 1 and 2 of 5 done).**
 
 Melbourne's Airbnb snapshot lists over 25,000 places to stay, and a common question in housing debates is how
 many of them are homes that would otherwise be rented to people who live here. Property managers and
@@ -35,8 +35,8 @@ off the long-term market. It is SQL (DuckDB) and Python on real public data, wit
 | Part | What | Status |
 | --- | --- | --- |
 | 1 | **Source, snapshot and data profile**: which listings count as the active market, 20 data-quality checks, room types, prices, councils, minimum stays and a first look at hosts | done: [`results/PROFILE.md`](results/PROFILE.md) |
-| 2 | **Pricing**: what a night costs by council, room type and size, how price varies with minimum stay and guests, and where listings price above or below similar ones | next |
-| 3 | **Host concentration**: how much of the market multi-listing operators run, council by council, and what a typical operator's portfolio looks like (hosts anonymised) | planned |
+| 2 | **Pricing**: what a night costs by size and council, size for size; how stay length, weekends and Grand Final weekend move the price; a council × size price guide; and how homes priced well above or below similar ones fare | done: [`results/PRICING.md`](results/PRICING.md) |
+| 3 | **Host concentration**: how much of the market multi-listing operators run, council by council, and what a typical operator's portfolio looks like (hosts anonymised) | next |
 | 4 | **Homes off the long-term market**: entire homes that are open most of the year and booked often enough to look like full-time short-stay rentals, by council, with their estimated earnings set against long-term rents | planned |
 | 5 | **Summary**: findings, ranked recommendations and limits | planned |
 
@@ -61,6 +61,31 @@ Full report: [`results/PROFILE.md`](results/PROFILE.md).
 
 ![Active listings by council](results/charts/01_listings_by_council.png)
 
+## Part 2 findings: pricing
+
+Full report: [`results/PRICING.md`](results/PRICING.md). It covers the 11,828 active entire homes with a quoted
+price and a bedroom count. Each home is compared with its **peers**: active entire homes in the same council with
+the same number of bedrooms (groups of 10 or more, which hold 98.2% of the homes).
+
+- **Raw council medians mislead.** Ranked by their own medians, Casey and Wyndham are the 2nd and 3rd dearest of
+  30 councils, because their homes are bigger (a median 4 bedrooms). Size for size they price 19.0% and 20.6%
+  below the market and rank 24th and 26th. Stonnington and Port Phillip go the other way (22nd → 4th and
+  20th → 5th). An investor comparing suburbs should compare homes of the same size; the repo includes a price guide
+  for 128 council × size groups (`results/peer_price_guide.csv`).
+- **Bigger homes cost more a night but less per guest.** The median quote rises from $229 for 1 bedroom to $309
+  for 2 and $425 for 3, while price per guest falls from $112 (homes taking 1-2 guests) to $50 (9 or more).
+- **Long stays are discounted.** Against their peers, quotes for 7-27 nights are 12.7% below and quotes for
+  28 nights or more 38.6% below.
+- **Grand Final weekend was mostly gone about a week out.** Only 14.6% of homes still had the Friday or Saturday of
+  25-26 September 2026 open, against 39.9% the weekend after. Short stays covering those nights quoted 26.4%
+  above peers (different listings, so consistent with event pricing rather than a measure of it). How far ahead a
+  stay starts makes little difference otherwise.
+- **Homes priced well above their peers show fewer stays.** The 10.1% priced 50% or more above their peers have a
+  median of 7 reviews in the year against 12 for homes within 10%, and 15 of the next 30 nights open against 12,
+  though they are rated slightly higher. Whether the higher price makes up for it is Part 4's question.
+
+![Entire-home prices by council, as quoted and size for size](results/charts/05_council_prices_same_size.png)
+
 ## How to run
 
 Python 3.12.
@@ -70,23 +95,27 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-lock.txt      # exact versions the committed outputs were made with
 python scripts/download_data.py           # once: ~66 MB into data/raw/, checked against the pinned hashes
 python scripts/profile_report.py          # builds data/str_melbourne.duckdb, writes results/ (Part 1)
+python scripts/pricing_report.py          # Part 2, from the same database
 pytest -q
 ```
 
 `python scripts/download_data.py --check` checks the files without touching the network.
 
-**Tests.** The build and every query are tested on a hand-made six-listing snapshot (`tests/conftest.py`) whose
-expected results are worked out by hand, so CI runs without downloading the data. With the real data present,
-`tests/test_regenerate.py` also checks that the committed report, CSVs and charts regenerate byte for byte, and
+**Tests.** The build and every query are tested on hand-made snapshots whose expected results are worked out
+by hand (six listings for Part 1 in `tests/conftest.py`, twelve for Part 2 in `tests/test_pricing.py`), so CI
+runs without downloading the data. With the real data present,
+`tests/test_regenerate.py` also checks that both reports, their CSVs and charts regenerate byte for byte, and
 `tests/test_readme.py` checks the figures in this README against the committed results.
 
 ## Repository layout
 
 ```
-str_market/   source.py (URLs, pinned hashes), build.py (raw files -> DuckDB), profile.py (Part 1 queries)
-sql/          one file per query; active_listings.sql defines the active market used everywhere
-scripts/      download_data.py, profile_report.py
-results/      PROFILE.md, aggregated CSVs, charts/
+str_market/   source.py (URLs, pinned hashes), build.py (raw files -> DuckDB), profile.py (Part 1 queries),
+              pricing.py (Part 2 thresholds and queries)
+sql/          one file per query; active_listings.sql defines the active market used everywhere,
+              priced_homes.sql the peer comparison used in Part 2
+scripts/      download_data.py, profile_report.py, pricing_report.py
+results/      PROFILE.md, PRICING.md, aggregated CSVs, charts/
 tests/        fixture snapshot and tests
 data/         SNAPSHOT.json (committed); raw/ and the DuckDB file are gitignored
 ```
@@ -96,6 +125,9 @@ data/         SNAPSHOT.json (committed); raw/ and the DuckDB file are gitignored
 - One snapshot, so no change over time. Inside Airbnb supplies older snapshots on request; none were requested.
 - "Active" is inferred from reviews, which miss stays where the guest left no review; the calendar cannot
   separate booked nights from nights the host blocked.
-- Prices are quotes for each listing's next available stay (usually its minimum stay), not typical nightly rates.
+- Prices are quotes for each listing's next available stay (usually its minimum stay), not typical nightly rates,
+  and the calendar carries no prices. So each listing has one price, and differences by date are differences
+  between listings.
+- Peers share a council and a bedroom count, not a street, view or fit-out.
 - Inside Airbnb is an advocacy project as well as a data source. Everything here is recomputed from its raw files
   with the definitions in `sql/`, not taken from its dashboards.

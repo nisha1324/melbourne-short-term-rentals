@@ -83,3 +83,63 @@ def test_readme_figure_matches_results(statement):
 def test_roadmap_points_at_existing_reports():
     for link in re.findall(r"\]\((results/[^)]+)\)", README):
         assert (source.ROOT / link).exists(), link
+
+
+def ordinal(k: float) -> str:
+    k = int(k)
+    return f"{k}{'th' if 10 <= k % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(k % 10, 'th')}"
+
+
+def part2_statements() -> list[str]:
+    size = csv("price_by_size").set_index("bed_band")
+    guests = csv("price_by_guests").set_index("band")
+    council = csv("price_by_council").set_index("lga")
+    stay = csv("price_by_stay_length").set_index("band")
+    dates = csv("price_by_stay_dates").set_index("band")
+    peers = csv("price_vs_peers").set_index("band")
+    guide = csv("peer_price_guide")
+    wk = csv("weekend_open").set_index("friday")
+    homes = int(size["listings"].sum())
+    scored = int(peers["listings"].sum())
+    ca, wy, st, pp = (council.loc[c] for c in ("Casey", "Wyndham", "Stonnington", "Port Phillip"))
+    return [
+        f"It covers the {homes:,} active entire homes with a quoted price and a bedroom count",
+        f"(groups of 10 or more, which hold {pct(scored, homes)} of the homes)",
+        f"Casey and Wyndham are the {ordinal(ca['raw_rank'])} and {ordinal(wy['raw_rank'])} dearest of "
+        f"{len(council)} councils",
+        f"(a median {ca['median_bedrooms']:.0f} bedrooms)" if ca["median_bedrooms"] == wy["median_bedrooms"]
+        else "MISMATCH",
+        f"Size for size they price {-ca['same_size_vs_market_pct']:.1f}% and {-wy['same_size_vs_market_pct']:.1f}% "
+        f"below the market and rank {ordinal(ca['same_size_rank'])} and {ordinal(wy['same_size_rank'])}",
+        f"Stonnington and Port Phillip go the other way ({ordinal(st['raw_rank'])} → {ordinal(st['same_size_rank'])} "
+        f"and {ordinal(pp['raw_rank'])} → {ordinal(pp['same_size_rank'])})",
+        f"a price guide for {len(guide)} council × size groups",
+        f"The median quote rises from ${size.loc[1, 'price_median']} for 1 bedroom to ${size.loc[2, 'price_median']} "
+        f"for 2 and ${size.loc[3, 'price_median']} for 3",
+        f"price per guest falls from ${guests.loc[1, 'per_guest_median']} (homes taking 1-2 guests) to "
+        f"${guests.loc[5, 'per_guest_median']} (9 or more)",
+        f"quotes for 7-27 nights are {-stay.loc[4, 'vs_peers_pct']:.1f}% below and quotes for 28 nights or more "
+        f"{-stay.loc[5, 'vs_peers_pct']:.1f}% below",
+        f"Only {wk.loc['2026-09-25', 'open_pct']:.1f}% of homes still had the Friday or Saturday of 25-26 September 2026 "
+        f"open, against {wk.loc['2026-10-02', 'open_pct']:.1f}% the weekend after",
+        f"Short stays covering those nights quoted {dates.loc[1, 'vs_peers_pct']:.1f}% above peers",
+        f"The {peers.loc[5, 'share_pct']:.1f}% priced 50% or more above their peers have a median of "
+        f"{peers.loc[5, 'reviews_ltm_median']:g} reviews in the year against {peers.loc[3, 'reviews_ltm_median']:g} "
+        f"for homes within 10%, and {peers.loc[5, 'open_30_median']:g} of the next 30 nights open against "
+        f"{peers.loc[3, 'open_30_median']:g}",
+        "though they are rated slightly higher" if peers.loc[5, "rating_median"] > peers.loc[3, "rating_median"]
+        else "MISMATCH",
+    ]
+
+
+@pytest.mark.parametrize("statement", part2_statements())
+def test_readme_part2_figure_matches_results(statement):
+    assert statement in text()
+
+
+def test_part2_ranking_claims_hold():
+    council = csv("price_by_council")
+    moved = council.assign(move=council["raw_rank"] - council["same_size_rank"])
+    # the two councils named as rising are the two biggest risers; Casey and Wyndham are among the four biggest fallers
+    assert set(moved.nlargest(2, "move")["lga"]) == {"Stonnington", "Port Phillip"}
+    assert {"Casey", "Wyndham"} <= set(moved.nsmallest(4, "move")["lga"])
